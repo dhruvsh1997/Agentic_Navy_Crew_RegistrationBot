@@ -195,6 +195,7 @@ def payload_maker(state: SuperAgentState) -> SuperAgentState:
         "user_id": user_id
     }
     final_agent_state = analysis_graph.invoke(initial_agent_state)
+    logger.debug(f"Payload maker state update: {final_agent_state}")
     if final_agent_state["error"]:
         logger.error(f"Error during analysis: {final_agent_state['error']}")
         state["error"] = final_agent_state["error"]
@@ -320,10 +321,6 @@ def insert_port_info_and_determine_strategic_advantage(state: SuperAgentState) -
         logger.error(f"Error determining strategic advantage: {e}", exc_info=True)
         state['error'] = f"Failed to determine strategic advantage: {e}"
         state['next'] = "END"
-        return state
-
-    qa = data.get("question", [])
-    state["next"] = "END" if isinstance(qa, list) and len(qa) == 0 else "answer_questions_node"
     return state
 
 def answer_questions_node(state: SuperAgentState) -> SuperAgentState:
@@ -351,10 +348,6 @@ def Q_router_node(state: SuperAgentState) -> SuperAgentState:
     logger.debug(f"Q_router directing to {'answer_questions_node' if not home_port else 'IPIA_node'}")
     return state
 
-def deqoute_node(state: SuperAgentState) -> SuperAgentState:
-    logger.debug(f"Deqoute node output: {state.get('output', {})} | IPIA: {state.get('IPIA', '')}")
-    return state
-
 # Supergraph Workflow
 superflow = StateGraph(SuperAgentState)
 superflow.add_node("payload", payload_maker)
@@ -364,7 +357,6 @@ superflow.add_node("ICIA_node", insert_crew_info_and_assess_readiness)
 superflow.add_node("IPIA_node", insert_port_info_and_determine_strategic_advantage)
 superflow.add_node("answer_questions_node", answer_questions_node)
 superflow.add_node("Q_router", Q_router_node)
-superflow.add_node("deqoute_node", deqoute_node)
 
 # Define edges
 superflow.set_entry_point("payload")
@@ -381,14 +373,8 @@ superflow.add_conditional_edges(
     lambda x: x["next"],
     {"answer_questions_node": "answer_questions_node", "IPIA_node": "IPIA_node"}
 )
-superflow.add_conditional_edges(
-    "IPIA_node",
-    lambda x: x["next"],
-    {"answer_questions_node": "answer_questions_node", "END": END}
-)
-superflow.add_edge("IPIA_node", "deqoute_node")
-superflow.add_edge("answer_questions_node", "deqoute_node")
-superflow.add_edge("deqoute_node", END)
+superflow.add_edge("IPIA_node", "answer_questions_node")
+superflow.add_edge("answer_questions_node", END)
 
 # Compile graph
 checkpointer = MemorySaver()

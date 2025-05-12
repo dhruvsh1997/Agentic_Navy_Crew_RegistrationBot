@@ -8,6 +8,7 @@ from .forms import ChatbotForm
 from .utils import supergraph
 from datetime import datetime
 import json
+from langgraph.errors import InvalidUpdateError
 
 # Set up logger
 logger = logging.getLogger(__name__)
@@ -74,6 +75,9 @@ def chatbot(request):
                     config={"configurable": {"thread_id": str(datetime.now().timestamp())}}
                 )
                 logger.debug(f"Final state for {user_id}: {final_state}")
+            except InvalidUpdateError as e:
+                logger.error(f"LangGraph concurrent update error: {e}", exc_info=True)
+                final_state = {"error": "Internal workflow error: concurrent state update"}
             except Exception as e:
                 logger.error(f"Exception in supergraph.invoke: {e}", exc_info=True)
                 final_state = {"error": str(e)}
@@ -103,6 +107,3 @@ def chatbot(request):
     else:
         form = ChatbotForm()
     return render(request, 'chatbot.html', {'form': form})
-
-# QUESTION:
-# I am Captain of Ballistic Missile Submarine Ship INS Arihant going on a deterrence mission with crew size 100 coming from Visakhapatnam. what is the priority of my mission?
