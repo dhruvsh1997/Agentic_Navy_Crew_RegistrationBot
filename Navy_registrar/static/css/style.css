@@ -1,0 +1,19 @@
+body {
+    background-color: #f8f9fa;
+}
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.container {
+    max-width: 800px;
+}
+form textarea {
+    width: 100%;
+    min-height: 100px;
+}
+pre {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 5px;
+} 

@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Chatbot{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <h2 class="mb-4">Navy Crew Registration Chatbot</h2>
+        <form method="post" id="chatbot-form" data-chatbot-url="{% url 'Navy_registrar:chatbot' %}">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary">Send</button>
+        </form>
+        {% if response %}
+        <div class="mt-4">
+            <h3>Response</h3>
+            <pre id="chatbot-response">{{ response }}</pre>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
